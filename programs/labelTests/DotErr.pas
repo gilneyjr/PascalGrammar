@@ -1,5 +1,5 @@
 program DotErr;
 
 begin
-	{ Nothing}
+	{ Nothing }
 end

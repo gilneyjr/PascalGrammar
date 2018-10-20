@@ -1,10 +1,11 @@
 -- Pascal ISO 7185:1990
 local re = require 'relabel'
 
+local Parser = {}
+
 -- Tabela contendo informações sobre cada tipo de erro
-local errinfo = {
+Parser.errinfo = {
 	AssignErr 			= 'Token \':=\' esperado!',
-	CaseListErr 		= 'Lista de casos esperada!',
 	ColonErr 			= 'Token \':\' esperado!',
 	ConstErr 			= 'Contante esperada!',
 	DoErr 				= 'Token \'do\' esperado!',
@@ -38,13 +39,14 @@ local errinfo = {
 	VarErr 				= 'Variável esperada!'
 }
 
+--[[
 -- Tabela contendo os erros capturados pelo parser
 local errors = {}
 
 -- Salva os erros na tabela errors
 local function save_err(subject, pos, label)
 	local line, col = re.calcline(subject,pos)
-	table.insert(errors, {line=line, col=col, msg=errinfo[label]})
+	table.insert(errors, {line=line, col=col, msg=Parser.errinfo[label]})
 	return true
 end
 
@@ -56,21 +58,23 @@ end
 -- Definições usadas na gramática
 local def = { save_err = save_err }
 
-local g = re.compile([[
+]]
+
+local g = re.compile[[
 	program 				<- head decs block Dot^DotErr (!.)^EndInputErr
 	head					<- Sp PROGRAM^ProgErr Id^ProgNameErr (LPar ids RPar^RParErr)? Semi^SemiErr
 	decs 					<- labelDecs constDefs typeDefs varDecs procAndFuncDecs
 	ids			 			<- Id (Comma Id^IdErr)*
 
-	labelDecs 				<- (LABEL labels Semi^SemiErr)?
-	labels 					<- label^LabelErr (Comma label^LabelErr)*
+	labelDecs 				<- (LABEL labels^LabelErr Semi^SemiErr)?
+	labels 					<- label (Comma label^LabelErr)*
 	label 					<- UInt
 
-	constDefs 				<- (CONST (constDef Semi^SemiErr)+)?
+	constDefs 				<- (CONST constDef^IdErr Semi^SemiErr (constDef Semi^SemiErr)*)?
 	constDef 				<- Id Eq^EqErr const^ConstErr
 	const 					<- Sign? (UNumber / Id) / String
 
-	typeDefs 				<- (TYPE (typeDef Semi^SemiErr)+)?
+	typeDefs 				<- (TYPE typeDef^IdErr Semi^SemiErr (typeDef Semi^SemiErr)*)?
 	typeDef					<- Id Eq^EqErr type^TypeErr
 	type 					<- newType / Id
 	newType 				<- newOrdinalType / newStructuredType / newPointerType
@@ -91,7 +95,7 @@ local g = re.compile([[
 	variant 				<- consts Colon^ColonErr LPar^LParErr fieldList RPar^RParErr
 	consts 					<- const (Comma const^ConstErr)*
 
-	varDecs 				<- (VAR (varDec Semi^SemiErr)+)?
+	varDecs 				<- (VAR varDec Semi^SemiErr (varDec Semi^SemiErr)*)?
 	varDec					<- ids Colon^ColonErr type^TypeErr
 
 	procAndFuncDecs			<- ((procDec / funcDec) Semi^SemiErr)*
@@ -115,7 +119,7 @@ local g = re.compile([[
 	structuredStmt			<- block / conditionalStmt / repetitiveStmt / withStmt
 	conditionalStmt 		<- ifStmt / caseStmt
 	ifStmt 					<- IF expr^ExprErr THEN^ThenErr stmt (ELSE stmt)?
-	caseStmt 				<- CASE expr^ExprErr OF^OfErr caseListElement^CaseListErr (Semi caseListElement)* Semi? END^EndErr
+	caseStmt 				<- CASE expr^ExprErr OF^OfErr caseListElement^ConstErr (Semi caseListElement)* Semi? END^EndErr
 	caseListElement 		<- consts Colon^ColonErr stmt
 	repetitiveStmt 			<- repeatStmt / whileStmt / forStmt
 	repeatStmt 				<- REPEAT stmts UNTIL^UntilErr expr^ExprErr
@@ -244,9 +248,10 @@ local g = re.compile([[
 	X			<- 'x' / 'X'
 	Y			<- 'y' / 'Y'
 	Z			<- 'z' / 'Z'
-]]..
+]]
+
+--[[ Recuperação:
 	"AssignErr		<- ('' -> 'AssignErr' => save_err) \n"..
-	"CaseListErr	<- ('' -> 'CaseListErr' => save_err) \n"..
 	"ColonErr		<- ('' -> 'ColonErr' => save_err) \n"..
 	"ConstErr		<- ('' -> 'ConstErr' => save_err) \n"..
 	"DoErr			<- ('' -> 'DoErr' => save_err) \n"..
@@ -278,13 +283,10 @@ local g = re.compile([[
 	"TypeErr		<- ('' -> 'TypeErr' => save_err) \n"..
 	"UntilErr		<- ('' -> 'UntilErr' => save_err) \n"..
 	"VarErr			<- ('' -> 'VarErr' => save_err) \n"
-, def)
-
-
-local Parser = {};
+]]
 
 Parser.parse = function(input)
-	errors = {}
+	--errors = {}
 	local ast, err, err_pos = g:match(input)
 
 	if not ast then
@@ -292,7 +294,7 @@ Parser.parse = function(input)
 		err_pos = {row=row, col=col}
 	end
 
-	return ast, err, err_pos, errors
+	return ast, err, err_pos
 end
 
 return Parser

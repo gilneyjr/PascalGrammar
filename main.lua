@@ -8,28 +8,26 @@ local function getInput(filename)
 	return input
 end
 
-local function check(input)
-	local ast, err, err_pos, errors = Parser.parse(input)
-
-	print('Erros encotrados: '..#errors)
-	for k,_error in pairs(errors) do
-		print(' '..k..'. (linha: '.._error.line..', coluna: '.._error.col .. '): '.._error.msg )
+local function mySplit(str)
+	local tab = {}
+	for i in string.gmatch(str, "%S+") do
+		table.insert(tab,i)
 	end
+	return {file=tab[1], err=tab[2]}
+end
 
-	if ast then
-		io.write('Resultado: ')
-		print 'Ok'
-	else
-		print('Erro não capturado: (linha: '..err_pos.row..', coluna: '..err_pos.col..')')
-	end
+local function check(input, expectedErr)
+	local ast, err, err_pos = Parser.parse(input)
+	assert(err == expectedErr)
+	print("  > " .. Parser.errinfo[err] .. ' (linha: ' .. err_pos.row .. ', coluna: '.. err_pos.col .. ')')
 end
 
 for line in io.lines('programs/labelTests/tests.txt') do
-	if #line == 0 then
-		break
-	end
+	if #line ~= 0 then
+		local test = mySplit(line)
 
-	print ('Testando \''..line..'\':')
-	check(getInput('programs/labelTests/'..line))
-	print ''
+		print ('Testando \''..test.file..'\':')
+		check(getInput('programs/labelTests/'..test.file), test.err)
+		print ''
+	end
 end

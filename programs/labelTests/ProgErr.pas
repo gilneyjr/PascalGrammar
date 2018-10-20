@@ -1,5 +1,5 @@
-HelloWorld;
+prog HelloWorld;
 
 begin
-	writeln('HelloWorld')
+	{ Nothing }
 end.

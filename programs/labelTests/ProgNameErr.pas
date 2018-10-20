@@ -1,4 +1,4 @@
-program;
+program 1p;
 
 begin
 	{ Nothing }

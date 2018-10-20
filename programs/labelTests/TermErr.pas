@@ -1,5 +1,5 @@
 program TermErr;
 
 begin
-	a := a + 
+	a := a + ;
 end.
