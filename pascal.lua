@@ -6,6 +6,7 @@ local Parser = {}
 -- Tabela contendo informações sobre cada tipo de erro
 Parser.errinfo = {
 	AssignErr 			= 'Token \':=\' esperado!',
+	BeginErr 			= 'Token \'begin\' esperado!',
 	ColonErr 			= 'Token \':\' esperado!',
 	ConstErr 			= 'Contante esperada!',
 	DoErr 				= 'Token \'do\' esperado!',
@@ -61,7 +62,7 @@ local def = { save_err = save_err }
 ]]
 
 local g = re.compile[[
-	program 				<- head decs block Dot^DotErr (!.)^EndInputErr
+	program 				<- head decs block^BeginErr Dot^DotErr (!.)^EndInputErr
 	head					<- Sp PROGRAM^ProgErr Id^ProgNameErr (LPar ids RPar^RParErr)? Semi^SemiErr
 	decs 					<- labelDecs constDefs typeDefs varDecs procAndFuncDecs
 	ids			 			<- Id (Comma Id^IdErr)*
