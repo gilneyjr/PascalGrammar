@@ -28,11 +28,16 @@ local function checkValid(input)
 		if err == 'fail' then
 			print 'fail'
 		else
-			print("  > " .. Parser.errinfo[err] .. ' (linha: ' .. err_pos.row .. ', coluna: '.. err_pos.col .. ')')
+			print("  > " .. (Parser.errinfo[err] or err) .. ' (linha: ' .. err_pos.row .. ', coluna: '.. err_pos.col .. ')')
 		end
 	end
-	assert(ast)
-	print 'Ok'
+	if not ast then
+		print 'Fail'
+	else
+		print 'Ok'
+	end
+	--assert(ast)
+	--print 'Ok'
 end
 
 

@@ -1,17 +1,49 @@
 Algoritmo conservativo:
-	Err_016: falhou no teste de 'EndErr1.pas'.
-		'integer' é um Id, que também é um tipo. Ao colocar a label em DotDot, se está assumnindo que sempre após um tipo Id deverá vir um 'DotDot', mas nunca um 'END'. Portanto, a label foi colocada indevidadamente.
+	3 labels a mais
+	45 labels a menos
 
-	Ao se retirar a label Err_016, as outras duas labels (Err_004 e Err_030) extras passaram nos demais testes. Logo, o algoritmo conservativo acrescentou 2 labels corretamente e 1 label indevidamente.
+	Labels a mais:
+		ids^Err_004 em head
+		DotDot^Err_016 em subrangeType
+		varDec^Err_030 em varDecs
+
+	Programas válidos:
+		label Err_004 passou em todos os testes.
+		label Err_016 falhou em todos os testes, exceto 'HelloWorld.pas' e 'operators.pas'.
+		label Err_030 passou em todos os testes.
+
+	Labels:
+		Err_016: falhou no teste de 'EndErr1.pas'.
+			'integer' é um Id, que também é um tipo. Ao colocar a label em DotDot, se está assumnindo que sempre após um tipo Id deverá vir um 'DotDot', mas nunca um 'END'. Portanto, a label foi colocada indevidadamente.
+
+		Ao se retirar a label Err_016, as outras duas labels (Err_004 e Err_030) extras passaram nos demais testes. Logo, o algoritmo conservativo acrescentou 2 labels corretamente e 1 label indevidamente.
 
 Algoritmo não-conservativo:
-	Err_094: falhou no teste de 'ColonErr6.pas'.
-		O parser tentou casar o primeiro 'a' de 'a ; a := 2;' como uma chamada de função, ignorando que 'a' poderia ser um Id, portanto deu um erro inesperado.
+	5 labels a mais
+	9 labels a menos
 
-	Ao se retirar a label Err_094, os testes falharam no mesmo erro descrito no algoritmo conservativo. A label Err_016 do algoritmo conservativo é a mesma que Err_022 do algoritmo não conservativo.
+	Labels a mais:
+		ids^Err_004 em head
+		DotDot^Err_022 em subrangeType
+		varDec^Err_043 em varDecs
+		Assign^Err_061 em assignStmt
+		params^Err_094 em funcCall
+		
+	Programas válidos:
+		label Err_004 passou em todos os testes.
+		label Err_022 falhou em todos os testes, exceto 'HelloWorld.pas' e 'operators.pas'.
+		label Err_043 passou em todos os testes.
+		label Err_061 falhou em todos os testes.
+		label Err_094 falhou em todos os testes, exceto 'HelloWorld.pas' e 'operators.pas'.
 
-	Após retirar a label Err_022, os teste de 'ExprErr4.pas' falhou na label Err_061. O erro ocorre, porque o parser reconhece 'writeln' como Id e tenta casar o token '(' com ':='. A consequência de se anotar esse token é que a gramática passará a não reconhecer stmts do tipo procStmt, pois, sempre que vier um Id, o parser vai sempre tentará reconhecer um assignStmt e lançará uma label caso não encontre um token ':='.
+	Labels:
+		Err_094: falhou no teste de 'ColonErr6.pas'.
+			O parser tentou casar o primeiro 'a' de 'a ; a := 2;' como uma chamada de função, ignorando que 'a' poderia ser um Id, portanto deu um erro inesperado.
 
-	E, por fim, retirada a label Err_061, o parser passou em todos os testes. Portanto, o algoritmo não conservativo inseriu 2 labels corretamente 3 labels indevidamente.
+		Ao se retirar a label Err_094, os testes falharam no mesmo erro descrito no algoritmo conservativo. A label Err_016 do algoritmo conservativo é a mesma que Err_022 do algoritmo não conservativo.
+
+		Após retirar a label Err_022, os teste de 'ExprErr4.pas' falhou na label Err_061. O erro ocorre, porque o parser reconhece 'writeln' como Id e tenta casar o token '(' com ':='. A consequência de se anotar esse token é que a gramática passará a não reconhecer stmts do tipo procStmt, pois, sempre que vier um Id, o parser vai sempre tentará reconhecer um assignStmt e lançará uma label caso não encontre um token ':='.
+
+		E, por fim, retirada a label Err_061, o parser passou em todos os testes. Portanto, o algoritmo não conservativo inseriu 2 labels corretamente 3 labels indevidamente.
 
 Ambos os algoritmos conseguiram inserir as mesmas 2 labels que foram acrescentadas devidamente, porém o algoritmo conservativo inseriu 1 labels indevidamente em contra partida ao algoritmo não-conservativo, onde esse número subiu para 3. Porém, o algoritmo não-conservativo errou somente 9 vezes ao não inserir labels que deveriam ser inseridas, já o algoritmo conservativo, errou 45 vezes.
