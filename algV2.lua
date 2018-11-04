@@ -1,69 +1,21 @@
--- Pascal ISO 7185:1990
-local re = require 'relabel'
+--[[Anotações resultantes da união entre as 
+	anotações da gramática original e as anotações
+	da gramática gerada pelo algoritmo não-conservativo.
 
-local Parser = {}
+	5 labels a mais
+	9 labels a menos
 
--- Tabela contendo informações sobre cada tipo de erro
-Parser.errinfo = {
-	AssignErr 			= 'Token \':=\' esperado!',
-	BeginErr 			= 'Token \'begin\' esperado!',
-	ColonErr 			= 'Token \':\' esperado!',
-	ConstErr 			= 'Contante esperada!',
-	DoErr 				= 'Token \'do\' esperado!',
-	DotErr 				= 'Token \'.\' esperado!',
-	EndErr 				= 'Token \'end\' esperado!',
-	EndInputErr			= 'Fim da entrada esperado!',
-	EqErr 				= 'Token \'=\' esperado!',
-	ExprErr 			= 'Expressão esperada!',
-	FactorErr 			= 'Fator esperado!',
-	FormalParamErr 		= 'Parâmetro formal esperado!',
-	FuncBodyErr 		= 'Corpo da função esperado!',
-	IdErr 				= 'Identificador esperado!',
-	LabelErr 			= 'Label esperada!',
-	LBrackErr 			= 'Token \'[\' esperado!',
-	LParErr 			= 'Token \'(\' esperado!',
-	OfErr				= 'Token \'of\' esperado!',
-	OrdinalTypeErr 		= 'Tipo ordinal (enum, subrange ou identificador) esperado!',
-	ProcBodyErr 		= 'Corpo do procedimento esperado!',
-	ProgErr 			= 'Token \'program\' esperado no início da entrada!',
-	ProgNameErr			= 'Nome do programa esperado!',
-	RBrackErr 			= 'Token \']\' esperado!',
-	RealParamErr		= 'Parâmetro real esperado!',
-	RParErr				= 'Token \')\' esperado!',
-	SimpleExprErr 		= 'Expressão não relacional esperada!',
-	SemiErr 			= 'Token \';\' esperado!',
-	TermErr 			= 'Termo esperado!',
-	ThenErr 			= 'Token \'then\'esperado!',
-	ToDownToErr 		= 'Token \'to\' ou \'downto\' esperado!',
-	TypeErr				= 'Tipo esperado!',
-	UntilErr 			= 'Token \'until\' esperado!',
-	VarErr 				= 'Variável esperada!'
-}
-
---[[
--- Tabela contendo os erros capturados pelo parser
-local errors = {}
-
--- Salva os erros na tabela errors
-local function save_err(subject, pos, label)
-	local line, col = re.calcline(subject,pos)
-	table.insert(errors, {line=line, col=col, msg=Parser.errinfo[label]})
-	return true
-end
-
--- Função que, dado um padrão p, retorna uma string contendo uma expressão de recuperação
-local function rec(p)
-	return '( !('..p..') .)*'
-end
-
--- Definições usadas na gramática
-local def = { save_err = save_err }
-
+	Labels a mais:
+		ids^Err_004 em head
+		DotDot^Err_022 em subrangeType
+		varDec^Err_043 em varDecs
+		Assign^Err_061 em assignStmt
+		params^Err_094 em funcCall
 ]]
 
-local g = re.compile[[
+grammar = [[
 	program 				<- head decs block^BeginErr Dot^DotErr (!.)^EndInputErr
-	head					<- Sp PROGRAM^ProgErr Id^ProgNameErr (LPar ids RPar^RParErr)? Semi^SemiErr
+	head					<- Sp PROGRAM^ProgErr Id^ProgNameErr (LPar ids^Err_004 RPar^RParErr)? Semi^SemiErr
 	decs 					<- labelDecs constDefs typeDefs varDecs procAndFuncDecs
 	ids			 			<- Id (Comma Id^IdErr)*
 
@@ -83,7 +35,7 @@ local g = re.compile[[
 	newStructuredType 		<- PACKED? unpackedStructuredType
 	newPointerType 			<- Pointer Id^IdErr
 	enumType 				<- LPar ids^IdErr RPar^RParErr
-	subrangeType 			<- const DotDot const^ConstErr
+	subrangeType 			<- const DotDot^Err_022 const^ConstErr
 	unpackedStructuredType 	<- arrayType / recordType / setType / fileType
 	arrayType 				<- ARRAY LBrack^LBrackErr ordinalType^OrdinalTypeErr (Comma ordinalType^OrdinalTypeErr)* RBrack^RBrackErr OF^OfErr type^TypeErr
 	recordType 				<- RECORD fieldList END^EndErr
@@ -96,7 +48,7 @@ local g = re.compile[[
 	variant 				<- consts Colon^ColonErr LPar^LParErr fieldList RPar^RParErr
 	consts 					<- const (Comma const^ConstErr)*
 
-	varDecs 				<- (VAR varDec Semi^SemiErr (varDec Semi^SemiErr)*)?
+	varDecs 				<- (VAR varDec^Err_043 Semi^SemiErr (varDec Semi^SemiErr)*)?
 	varDec					<- ids Colon^ColonErr type^TypeErr
 
 	procAndFuncDecs			<- ((procDec / funcDec) Semi^SemiErr)*
@@ -111,7 +63,7 @@ local g = re.compile[[
 	stmts 					<- stmt (Semi stmt)*
 	stmt 					<- (label Colon^ColonErr)? (simpleStmt / structuredStmt)?
 	simpleStmt 				<- assignStmt / procStmt / gotoStmt
-	assignStmt 				<- var Assign expr^ExprErr
+	assignStmt 				<- var Assign^Err_061 expr^ExprErr
 	var 					<- Id (LBrack expr^ExprErr (Comma expr^ExprErr)* RBrack^RBrackErr / Dot Id^IdErr / Pointer)*
 	procStmt				<- Id params?
 	params 					<- LPar (param (Comma param^RealParamErr)*)? RPar^RParErr
@@ -133,7 +85,7 @@ local g = re.compile[[
 	term 					<- factor (MultOp factor^FactorErr)*
 	factor 					<- NOT* (funcCall / var / unsignedConst / setConstructor / LPar expr^ExprErr RPar^RParErr)
 	unsignedConst 			<- UNumber / String / Id / NIL
-	funcCall 				<- Id params
+	funcCall 				<- Id params^Err_094
 	setConstructor 			<- LBrack (memberDesignator (Comma memberDesignator^ExprErr)*)? RBrack^RBrackErr
 	memberDesignator 		<- expr (DotDot expr^ExprErr)?
 
@@ -250,52 +202,3 @@ local g = re.compile[[
 	Y			<- 'y' / 'Y'
 	Z			<- 'z' / 'Z'
 ]]
-
---[[ Recuperação:
-	"AssignErr		<- ('' -> 'AssignErr' => save_err) \n"..
-	"ColonErr		<- ('' -> 'ColonErr' => save_err) \n"..
-	"ConstErr		<- ('' -> 'ConstErr' => save_err) \n"..
-	"DoErr			<- ('' -> 'DoErr' => save_err) \n"..
-	"DotErr			<- ('' -> 'DotErr' => save_err) \n"..
-	"EndErr			<- ('' -> 'EndErr' => save_err) \n"..
-	"EndInputErr	<- ('' -> 'EndInputErr' => save_err) \n"..
-	"EqErr			<- ('' -> 'EqErr' => save_err) \n"..
-	"ExprErr		<- ('' -> 'ExprErr' => save_err) \n"..
-	"FormalParamErr	<- ('' -> 'FormalParamErr' => save_err) \n"..
-	"FactorErr		<- ('' -> 'FactorErr' => save_err) \n"..
-	"FuncBodyErr	<- ('' -> 'FuncBodyErr' => save_err) \n"..
-	"IdErr 			<- ('' -> 'IdErr' => save_err) \n"..
-	"LabelErr 		<- ('' -> 'LabelErr' => save_err) \n"..
-	"LBrackErr 		<- ('' -> 'LBrackErr' => save_err) \n"..
-	"LParErr 		<- ('' -> 'LParErr' => save_err) \n"..
-	"OfErr	 		<- ('' -> 'OfErr' => save_err) \n"..
-	"OrdinalTypeErr <- ('' -> 'OrdinalTypeErr' => save_err) \n"..
-	"ProcBodyErr 	<- ('' -> 'ProcBodyErr' => save_err) \n"..
-	"ProgErr		<- ('' -> 'ProgErr' => save_err) \n"..
-	"ProgNameErr	<- ('' -> 'ProgNameErr' => save_err) \n"..
-	"RBrackErr		<- ('' -> 'RBrackErr' => save_err) \n"..
-	"RealParamErr	<- ('' -> 'RealParamErr' => save_err) \n"..
-	"RParErr		<- ('' -> 'RParErr' => save_err) \n"..
-	"SemiErr		<- ('' -> 'SemiErr' => save_err) \n"..
-	"SimpleExprErr	<- ('' -> 'SimpleExprErr' => save_err) \n"..
-	"TermErr		<- ('' -> 'TermErr' => save_err) \n"..
-	"ThenErr		<- ('' -> 'ThenErr' => save_err) \n"..
-	"ToDownToErr	<- ('' -> 'ToDownToErr' => save_err) \n"..
-	"TypeErr		<- ('' -> 'TypeErr' => save_err) \n"..
-	"UntilErr		<- ('' -> 'UntilErr' => save_err) \n"..
-	"VarErr			<- ('' -> 'VarErr' => save_err) \n"
-]]
-
-Parser.parse = function(input)
-	--errors = {}
-	local ast, err, err_pos = g:match(input)
-
-	if not ast then
-		local row, col = re.calcline(input,err_pos)
-		err_pos = {row=row, col=col}
-	end
-
-	return ast, err, err_pos
-end
-
-return Parser

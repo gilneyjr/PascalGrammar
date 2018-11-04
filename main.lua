@@ -1,7 +1,5 @@
 local Parser = require 'pascal'
 
-print(package.path)
-
 local function getInput(filename)
 	local input = ''
 	for line in io.lines(filename) do
@@ -20,7 +18,7 @@ end
 
 local function checkLabel(input, expectedErr)
 	local ast, err, err_pos = Parser.parse(input)
-	assert(err == expectedErr, '\n\tLabel esperada: '.. expectedErr .. '\n\tLabel encontrada: '.. (err or 'nil'))
+	assert(err == expectedErr, '\n\tLabel esperada: '.. expectedErr .. '\n\tLabel encontrada: '.. (err or 'nil') .. '\n\tPosição: (linha: ' .. err_pos.row .. ', coluna: ' .. err_pos.col .. ')')
 	print("  > " .. Parser.errinfo[err] .. ' (linha: ' .. err_pos.row .. ', coluna: '.. err_pos.col .. ')')
 end
 

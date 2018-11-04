@@ -45,7 +45,7 @@ local tree, rules = m.match[[
 	funcDec 	 			<- funcHeading Semi (decs block / Id)
 	funcHeading				<- FUNCTION Id formalParams? Colon type
 	formalParams 			<- LPar formalParamsSection (Semi formalParamsSection)* RPar
-formalParamsSection <- VAR? ids Colon Id / procHeading / funcHeading
+	formalParamsSection <- VAR? ids Colon Id / procHeading / funcHeading
 	block 					<- BEGIN stmts END
 	stmts 					<- stmt (Semi stmt)*
 	stmt 					<- (label Colon)? (simpleStmt / structuredStmt)?
@@ -54,7 +54,7 @@ formalParamsSection <- VAR? ids Colon Id / procHeading / funcHeading
 	var 					<- Id (LBrack expr (Comma expr)* RBrack / Dot Id / Pointer)*
 	procStmt				<- Id params?
 	params 					<- LPar (param (Comma param)*)? RPar
-	param 					<- expr (Colon expr)^-2
+	param 					<- expr (Colon expr)? (Colon expr)?
 	gotoStmt 				<- GOTO label
 	structuredStmt			<- block / conditionalStmt / repetitiveStmt / withStmt
 	conditionalStmt 		<- ifStmt / caseStmt
@@ -95,7 +95,7 @@ formalParamsSection <- VAR? ids Colon Id / procHeading / funcHeading
 	RPar 					<- ')' Sp
 	Semi 					<- ';' Sp
 	Sign 					<- ('+'/'-') Sp
-	Sp						<- (%s / %nl / Comments)*
+	Sp						<- (' '/ Comments)*
 	String					<- "'" [^']* "'" Sp
 	UInt 					<- [0-9]+ Sp
 	UNumber 				<- UReal / UInt
@@ -184,9 +184,9 @@ formalParamsSection <- VAR? ids Colon Id / procHeading / funcHeading
 	Y			<- 'y' / 'Y'
 	Z			<- 'z' / 'Z'
 ]]
-print (rules)
 
-print(pretty.printg(tree, rules), '\n')
+local treerec, rulesrec = recovery.addlab(tree, rules, false, false)
+print(pretty.printg(treerec, rulesrec), '\n')
 
 
 --[=[
