@@ -1,6 +1,6 @@
 Algoritmo conservativo:
 	3 labels a mais
-	45 labels a menos
+	45 labels a menos (cerca de 44.12% das 102 labels anotadas na gramática original)
 
 	Labels a mais:
 		ids^Err_004 em head
@@ -14,13 +14,24 @@ Algoritmo conservativo:
 
 	Labels:
 		Err_016: falhou no teste de 'EndErr1.pas'.
-			'integer' é um Id, que também é um tipo. Ao colocar a label em DotDot, se está assumnindo que sempre após um tipo Id deverá vir um 'DotDot', mas nunca um 'END'. Portanto, a label foi colocada indevidadamente.
+			O token, dentre várias outras opções, pode ser um subrangeType ou um Id. Ao tentar reconhecer um subrangeType, o parser casa o token const (que pode ser um Id) e falha se não encontrar o token DotDot ('..'). O que impossibilitaria o reconhecimento de Id, visto que subrangeType é testado primeiro. Portanto, a label foi colocada indevidadamente.
 
 		Ao se retirar a label Err_016, as outras duas labels (Err_004 e Err_030) extras passaram nos demais testes. Logo, o algoritmo conservativo acrescentou 2 labels corretamente e 1 label indevidamente.
 
+Algoritmo soft:
+	3 labels a mais
+	39 labels a menos (38.24% das 102 labels anotadas na gramática original)
+
+	Labels a mais:
+		ids^Err_004 em head
+		DotDot^Err_016 em subrangeType
+		varDec^Err_030 em varDecs
+
+	Como as labels anotadas a mais por este algorimto foram iguais às labels a mais anotadas pelo algorimo conservativo, a análise destes resultados é a mesma da anterior.
+
 Algoritmo não-conservativo:
 	5 labels a mais
-	9 labels a menos
+	9 labels a menos (8.82% das 102 labels anotadas na gramática original)
 
 	Labels a mais:
 		ids^Err_004 em head
@@ -38,12 +49,15 @@ Algoritmo não-conservativo:
 
 	Labels:
 		Err_094: falhou no teste de 'ColonErr6.pas'.
-			O parser tentou casar o primeiro 'a' de 'a ; a := 2;' como uma chamada de função, ignorando que 'a' poderia ser um Id, portanto deu um erro inesperado.
+			O erro ocorre, pois, ao anotar o token params de funcCall, sempre que o parser não encontrar parâmetros após um Id, será lançada uma label. Assim, o parser nunca reconhecerá um simples Id dentro de uma expressão.
 
 		Ao se retirar a label Err_094, os testes falharam no mesmo erro descrito no algoritmo conservativo. A label Err_016 do algoritmo conservativo é a mesma que Err_022 do algoritmo não conservativo.
 
-		Após retirar a label Err_022, os teste de 'ExprErr4.pas' falhou na label Err_061. O erro ocorre, porque o parser reconhece 'writeln' como Id e tenta casar o token '(' com ':='. A consequência de se anotar esse token é que a gramática passará a não reconhecer stmts do tipo procStmt, pois, sempre que vier um Id, o parser vai sempre tentará reconhecer um assignStmt e lançará uma label caso não encontre um token ':='.
+		Após retirar a label Err_022, os teste de 'ExprErr4.pas' falhou na label Err_061. Este erro acontece, pois, ao anotar o token Assign em assignStmt, sempre que o parser reconhecer um Id, tentará casar um token Assign e lançará uma label caso não consiga, impossibilitando o reconhecimento de uma chamada de procedimento (procStmt <- Id params?).
 
-		E, por fim, retirada a label Err_061, o parser passou em todos os testes. Portanto, o algoritmo não conservativo inseriu 2 labels corretamente 3 labels indevidamente.
+		E, por fim, retirada a label Err_061, o parser passou em todos os testes. Logo, o algoritmo não conservativo inseriu 2 labels corretamente e 3 labels indevidamente.
 
-Ambos os algoritmos conseguiram inserir as mesmas 2 labels que foram acrescentadas devidamente, porém o algoritmo conservativo inseriu 1 labels indevidamente em contra partida ao algoritmo não-conservativo, onde esse número subiu para 3. Porém, o algoritmo não-conservativo errou somente 9 vezes ao não inserir labels que deveriam ser inseridas, já o algoritmo conservativo, errou 45 vezes.
+
+Quanto às labels inseridas a menos, o algoritmo não-conservativo se saiu melhor, não anotando apenas 9 labels (cerca 8.82% de erro). Após ele, veio o algoritmo soft, que deixou de inserir 39 labels (cerca de 38.24% de erro). E, por último, o algoritmo conservativo que deixou de anotar 45 labels (cerca de 44.12% de erro).
+
+Por outro lado, os algoritmos soft e conservativo, ambos com o mesmo resultado, se sairam melhor em inserir 2 labels a mais corretamente e 1 label a mais incorretamente, enquanto o algorimto não-conservativo inseriu 2 labels a mais correntamente, mas 3 labels a mais incorretamente.

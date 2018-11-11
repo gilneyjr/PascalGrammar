@@ -185,7 +185,7 @@ local tree, rules = m.match[[
 	Z			<- 'z' / 'Z'
 ]]
 
-local treerec, rulesrec = recovery.addlab(tree, rules, false, false)
+local treerec, rulesrec = recovery.addlab(tree, rules, false, "soft")
 print(pretty.printg(treerec, rulesrec), '\n')
 
 
